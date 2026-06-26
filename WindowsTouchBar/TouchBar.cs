@@ -1,4 +1,8 @@
-﻿using SkiaSharp;
+﻿# Patch TouchBar.cs
+cp /tmp/WindowsTouchBar/WindowsTouchBar/TouchBar.cs /tmp/TouchBar.cs.orig
+
+cat > /tmp/WindowsTouchBar/WindowsTouchBar/TouchBar.cs << 'CSEOF'
+using SkiaSharp;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using WindowsTouchBar.Device;
@@ -93,9 +97,9 @@ internal class TouchBar : IDisposable
                 {
                     PropertyNameCaseInsensitive = true,
                     Converters =
-                {
-                    new JsonStringEnumConverter()
-                }
+                    {
+                        new JsonStringEnumConverter()
+                    }
                 });
             }
             catch { }
@@ -154,15 +158,35 @@ internal class TouchBar : IDisposable
         RefreshView();
     }
 
-    private void RefreshView()
+    private string? GetProcessName(ForegroundProcess? process)
     {
-        string? name = null;
+        if (process?.Process == null)
+            return null;
 
+        // Перший варіант: MainModule (може впасти з Access Denied для захищених процесів)
         try
         {
-            name = currentProcess?.Process?.MainModule?.ModuleName;
+            var moduleName = process.Process.MainModule?.ModuleName;
+            if (!string.IsNullOrWhiteSpace(moduleName))
+                return moduleName;
         }
         catch { }
+
+        // Fallback: ProcessName + ".exe" (завжди доступно)
+        try
+        {
+            var processName = process.Process.ProcessName;
+            if (!string.IsNullOrWhiteSpace(processName))
+                return processName + ".exe";
+        }
+        catch { }
+
+        return null;
+    }
+
+    private void RefreshView()
+    {
+        var name = GetProcessName(currentProcess);
 
         Settings.View? view = null;
 
@@ -260,9 +284,9 @@ internal class TouchBar : IDisposable
         {
             if (disposing)
             {
-                
+
             }
-            
+
             NativeMethods.CloseHandle(deviceHandle);
             TouchReceiver.Event -= TouchReceiver_Event;
 

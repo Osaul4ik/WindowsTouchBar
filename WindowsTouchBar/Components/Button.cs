@@ -29,8 +29,8 @@ internal class Button : Rectangle, ITouchComponent, IDisposable
         _width = size.Width;
     }
 
-    private Text GetText() {
-
+    private Text GetText()
+    {
         if (_text is null)
         {
             _text = new Text(string.Empty);
@@ -71,11 +71,11 @@ internal class Button : Rectangle, ITouchComponent, IDisposable
             if (_text is not null)
             {
                 var x = (Width - ContentWidth) / 2;
-                
+
                 _image.Center = new SKPoint(x + _image.Width / 2, Height / 2);
             }
             else
-            {   
+            {
                 _image.Center = new SKPoint(Width / 2, Height / 2);
             }
         }
@@ -158,11 +158,20 @@ internal class Button : Rectangle, ITouchComponent, IDisposable
 
             if (value is not null)
             {
-                _image = new Image(SKBitmap.Decode(value))
+                // Захист від відсутнього файлу або некоректного зображення
+                try
                 {
-                    AlignMode = Image.ImageAlignMode.CenterMiddle,
-                    SizeMode = Image.ImageSizeMode.Contain
-                };
+                    var bitmap = SKBitmap.Decode(value);
+                    if (bitmap is not null)
+                    {
+                        _image = new Image(bitmap)
+                        {
+                            AlignMode = Image.ImageAlignMode.CenterMiddle,
+                            SizeMode = Image.ImageSizeMode.Contain
+                        };
+                    }
+                }
+                catch { }
             }
 
             UpdateButton();
